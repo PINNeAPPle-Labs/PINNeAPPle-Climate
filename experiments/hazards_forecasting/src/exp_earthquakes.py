@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from common import DATA, RESULTS, block_bootstrap, skill
+from etas import ETASExpert, GatedETAS
 from pinneapple_systems.time_series import AdaptiveForecaster, default_experts
 
 REGIONS = {"global": None, "japan": (30, 46, 128, 148), "chile_peru": (-45, -5, -80, -65),
@@ -68,21 +69,35 @@ def weekly(df, box):
     return s
 
 
-def experts():
+def experts(catalog=None, week_index=None, etas=True):
     ex = default_experts(season_length=1)
     ex["climatology"] = Climatology()
     ex["omori"] = OmoriDecay()
+    if etas and catalog is not None:
+        t0 = pd.Timestamp("1970-01-01", tz="UTC")
+        ex["etas"] = ETASExpert((catalog.time - t0).dt.total_seconds().values / 86400, catalog.mag.values,
+                                (week_index - t0).total_seconds().values / 86400)
+        ex["etas_gated"] = GatedETAS(ex["etas"])
     return ex
 
 
-def main():
+def region_catalog(df, box):
+    if box:
+        la0, la1, lo0, lo1 = box
+        df = df[df.latitude.between(la0, la1) & df.longitude.between(lo0, lo1)]
+    return df.sort_values("time")
+
+
+def main(etas=True):
+    global ETAS
+    ETAS = etas
     df = load()
     out = {}
     for name, box in REGIONS.items():
         s = weekly(df, box)
         y = np.log1p(s.values.astype(float))
         start = int(np.argmax(s.index.year >= EVAL_YEAR - 5))           # forecasts begin 5 years before the metrics
-        run = AdaptiveForecaster(experts(), horizon=H).run(y, start=start)
+        run = AdaptiveForecaster(experts(region_catalog(df, box), s.index, etas=ETAS), horizon=H, max_history=None if ETAS else 1000).run(y, start=start)
         res = {"n_weeks": int(len(y)), "mean_weekly_count": float(s.mean())}
         eval_mask = s.index[run.origins].year >= EVAL_YEAR
         for h in range(1, H + 1):
@@ -107,9 +122,11 @@ def main():
         print(f"{name:16s} h1 MAE ens {r1['mae_ensemble']:.3f} clim {r1['mae_climatology']:.3f} naive {r1['mae_naive']:.3f} "
               f"| skill vs clim {r1['skill_vs_climatology'][0]:+.3f} [{r1['skill_vs_climatology'][1]:+.3f},"
               f"{r1['skill_vs_climatology'][2]:+.3f}] | cov {r1['coverage_90']:.2f}")
-    (RESULTS / "earthquakes.json").write_text(json.dumps(out, indent=1))
+    (RESULTS / ("earthquakes_v2.json" if etas else "earthquakes.json")).write_text(json.dumps(out, indent=1))
     return out
 
+
+ETAS = True
 
 if __name__ == "__main__":
     main()
