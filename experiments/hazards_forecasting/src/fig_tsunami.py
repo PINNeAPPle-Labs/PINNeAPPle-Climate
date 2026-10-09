@@ -15,7 +15,7 @@ SHIFT = 3.0
 
 
 def main():
-    d = pickle.load(open(RESULTS / "tsunamis_predictions.pkl", "rb"))
+    d = pickle.load(open(RESULTS / "tsunamis_v2_predictions.pkl", "rb"))
     fig, ax = plt.subplots(3, 3, figsize=(17, 15))
     for r, (name, i) in enumerate(EVENTS.items()):
         c, run = d["cases"][i], d["combine"][i]
@@ -41,7 +41,7 @@ def main():
         cov = np.mean((obs >= lo) & (obs <= hi))
         a.set(xlabel="observed log10 H", ylabel="forecast log10 H", title=f"{len(obs)} sites; MAE {np.mean(np.abs(obs - pred)):.2f} dex; 90% interval covers {cov:.0%}")
         a.set_aspect("equal")
-    fig.suptitle("Tsunami run-up forecasts (adaptive ensemble) vs NOAA observations, over NASA Blue Marble satellite imagery", y=0.995)
+    fig.suptitle("Tsunami run-up (v2, bathymetry-aware adaptive ensemble) vs NOAA observations, over NASA Blue Marble satellite imagery", y=0.995)
     fig.savefig(FIGS / "tsunami_map_vs_observed.png", dpi=110, bbox_inches="tight")
 
 

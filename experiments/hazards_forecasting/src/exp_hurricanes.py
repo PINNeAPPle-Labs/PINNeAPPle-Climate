@@ -151,7 +151,7 @@ def build(task, pool):
               from_callable("kaplan_demaria", kaplan_demaria, cost=1)]
     else:
         ex = [from_callable("const_velocity", persistence_track, cost=1)]
-    for kind in ("ridge", "hgb", "mlp", "knn"):
+    for kind in ("ridge", "hgb", "knn"):          # an MLP expert was dropped: with this scikit-learn it raised on every call (see README)
         ex.append(from_callable(kind, Learned(kind, task, pool), cost=5))
     return ex
 

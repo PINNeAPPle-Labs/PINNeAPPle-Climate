@@ -24,8 +24,9 @@ def main(name):
     m = (tgt.year >= EVAL_FROM) & (run.origins + 1 < len(y))
     obs, fc = y[run.origins + 1][m], run.forecast[m, 0]
     t = tgt[m]
-    fig = plt.figure(figsize=(16, 8.5))
-    ax = fig.add_subplot(2, 1, 1)
+    fig = plt.figure(figsize=(16, 11))
+    gs = fig.add_gridspec(3, 3, height_ratios=[2.2, 1.1, 2])
+    ax = fig.add_subplot(gs[0, :])
     ax.fill_between(t, np.maximum(run.lower[m, 0], 0), run.upper[m, 0], alpha=0.25, label="90 % interval")
     ax.plot(t, fc, label="adaptive ensemble, 1 week ahead")
     ax.plot(t, obs, "k-", lw=0.7, label="observed (VIIRS thermal pixels)")
@@ -33,11 +34,19 @@ def main(name):
     ax.set_title(f"{name.title()}: skill vs persistence {r['skill_vs_naive'][0]:+.2f} [{r['skill_vs_naive'][1]:+.2f},{r['skill_vs_naive'][2]:+.2f}], "
                  f"vs climatology {r['skill_vs_climatology'][0]:+.2f}; 90 % interval covers {r['coverage_90']:.0%}", fontsize=10)
     ax.set_ylabel("log(1 + thermal pixels / day)"); ax.legend(loc="upper left")
+    ax.tick_params(labelbottom=False)
+    adv = fig.add_subplot(gs[1, :], sharex=ax)
+    naive = y[run.origins[m]]                                     # persistence: last observed value
+    gain = np.cumsum(np.abs(obs - naive) - np.abs(obs - fc))
+    adv.plot(t, gain, "C2")
+    adv.axhline(0, color="grey", lw=0.8)
+    adv.set_ylabel("cumulative error\nadvantage vs persistence")
+    adv.set_title("rising = the ensemble is beating 'same as last week' (regime changes, decays); flat = tied", fontsize=9)
     picks = {"most active week": int(np.argmax(obs)), "largest forecast error": int(np.argmax(np.abs(obs - fc))),
              "quiet week": int(np.argmin(obs + 0.001 * np.arange(len(obs))))}
     for k, (lab, i) in enumerate(picks.items()):
         ax.axvline(t[i], color="r", ls=":", lw=0.8)
-        a = fig.add_subplot(2, 3, 4 + k)
+        a = fig.add_subplot(gs[2, k])
         day = (t[i] - pd.Timedelta(days=3)).strftime("%Y-%m-%d")
         a.imshow(snapshot((lat - hw, lon - hw, lat + hw, lon + hw), day, layers=LAYERS, width=700),
                  extent=(lon - hw, lon + hw, lat - hw, lat + hw))

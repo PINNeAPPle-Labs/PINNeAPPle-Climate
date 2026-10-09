@@ -7,3 +7,5 @@ data/volcano/gvp_eruptions.json
 data/volcano/old_wide_box/
 __pycache__/
 *.log
+data/bathy/
+results/hurricanes_*_predictions.pkl

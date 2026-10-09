@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from common import FIGS
-from exp_earthquakes import EVAL_YEAR, H, REGIONS, experts, load, weekly
+from exp_earthquakes import EVAL_YEAR, H, REGIONS, experts, load, region_catalog, weekly
 from gibs import snapshot
 from pinneapple_systems.time_series import AdaptiveForecaster
 
@@ -19,7 +19,7 @@ def main():
     df = load()
     s = weekly(df, BOX)
     y = np.log1p(s.values.astype(float))
-    run = AdaptiveForecaster(experts(), horizon=H).run(y, start=int(np.argmax(s.index.year >= EVAL_YEAR - 5)))
+    run = AdaptiveForecaster(experts(region_catalog(df, BOX), s.index), horizon=H, max_history=None).run(y, start=int(np.argmax(s.index.year >= EVAL_YEAR - 5)))
     orig = s.index[run.origins]                            # forecast at origin for the week after (h=1)
     tgt = orig + pd.Timedelta(weeks=1)
     fig = plt.figure(figsize=(16, 9))
@@ -28,9 +28,11 @@ def main():
     obs = np.expm1(y[run.origins + 1][m]); fc = np.expm1(run.forecast[m, 0])
     ax.fill_between(tgt[m], np.expm1(np.maximum(run.lower[m, 0], 0)), np.expm1(run.upper[m, 0]), alpha=0.25, label="90 % interval")
     ax.plot(tgt[m], fc, label="adaptive ensemble, 1 week ahead")
+    ie = run.expert_names.index("etas_gated")
+    ax.plot(tgt[m], np.expm1(run.expert_forecasts[m, ie, 0]), "C3--", lw=1.2, label="ETAS expert (active during sequences)")
     ax.plot(tgt[m], obs, "k.-", lw=0.8, label="observed (USGS)")
     ax.set_yscale("log"); ax.set_ylabel("M>=4.5 per week, Japan box"); ax.legend()
-    ax.set_title("No forecast anticipates the mainshock (week of 2011-03-13); the ensemble under-predicts the first aftershock weeks and catches up after 2-3 weeks")
+    ax.set_title("Nothing anticipates the mainshock; the ETAS expert (dashed) predicts the aftershock level a week later, the ensemble only partly follows it (online weights)")
     lat0, lat1, lon0, lon1 = BOX
     for k, w in enumerate(WEEKS):
         a = fig.add_subplot(2, 3, 4 + k)
