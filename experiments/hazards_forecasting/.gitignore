@@ -1,0 +1,9 @@
+# re-downloadable with src/download_data.py (the VIIRS series, which took ~1 h to extract, are kept)
+data/ibtracs/
+data/usgs/
+data/tsunami/
+data/gibs/
+data/volcano/gvp_eruptions.json
+data/volcano/old_wide_box/
+__pycache__/
+*.log
