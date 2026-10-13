@@ -57,8 +57,8 @@ def run_delayed(ens, queries, references, available_at, keep=False):
     run = ens.run_delayed(queries, references, available_at, issue_times=[q["t"] for q in queries],
                           keep_predictions=True, flush=False)
     return [{"prediction": p["prediction"], "lower": p["lower"], "upper": p["upper"], "active": p["active"],
-             "experts": p["expert_predictions"], "weights": dict(zip(run.names, w.tolist()))}
-            for p, w in zip(run.predictions, run.weights)]
+             "experts": p["expert_predictions"], "weights": dict(zip(run.names, w.tolist(), strict=True))}
+            for p, w in zip(run.predictions, run.weights, strict=True)]
 
 
 def cluster_skill(err_model, err_ref, groups, n=2000, seed=0):
