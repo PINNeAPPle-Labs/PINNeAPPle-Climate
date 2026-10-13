@@ -1,0 +1,6 @@
+outs:
+- md5: 90dc503d2127b4f3356cd9bf399618b8.dir
+  size: 536492896
+  nfiles: 2549
+  hash: md5
+  path: solver

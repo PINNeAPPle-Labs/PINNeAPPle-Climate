@@ -1,0 +1,6 @@
+[core]
+    remote = servidor
+[cache]
+    type = "reflink,copy"
+['remote "servidor"']
+    url = ssh://pinneapple-arena/srv/dados/pinneapple/climate

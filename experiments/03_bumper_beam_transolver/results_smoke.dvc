@@ -1,0 +1,6 @@
+outs:
+- md5: bfa678fce93beb6549b2d023cd2f298c.dir
+  size: 3461176
+  nfiles: 5
+  hash: md5
+  path: results_smoke
