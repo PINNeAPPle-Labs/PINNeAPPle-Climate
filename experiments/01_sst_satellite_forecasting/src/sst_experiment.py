@@ -309,9 +309,10 @@ def load_models():
 def stage_eval(D, bat):
     from pinneapple_analysis.uncertainty.calibration import CalibrationMetrics
     from pinneapple_analysis.uncertainty.conformal import ConformalPredictor
-    from pinneapple_analysis.verification.physics_confidence_score import CalibrationSummary, compute_physics_confidence
-    from pinneapple_data.physics_case import PhysicsCase
-    from pinneapple_pdb.benchmarks import BenchmarkEntry, register_benchmark
+    from pinneapple_analysis.verification.physics_confidence_score import (
+        CalibrationSummary,
+        score_against_reference,
+    )
 
     models, final = load_models()
     va, te = D.indices("val"), D.indices("test")
@@ -383,33 +384,19 @@ def stage_eval(D, bat):
     xs = np.array([(t, L + 1, p) for t in sub for L in leads_used for p in oc_idx], np.float32)
     ys = np.array([D.anom[t + L + 1].ravel()[oc_idx] for t in sub for L in leads_used], np.float32).reshape(-1, 1) * D.scale
 
-    @register_benchmark("oisst_bmc_test_2018_2024")
-    def _b():
-        return BenchmarkEntry(name="oisst_bmc_test_2018_2024",
-                              description="NOAA OISST v2.1 SST anomalies, Brazil-Malvinas Confluence, held-out 2018-2024",
-                              reference_source="NOAA PSL OISST v2.1 (psl.noaa.gov)", x_vars=("origin", "lead", "pixel"),
-                              y_vars=("sst_anom",), reference_x=xs, reference_y=ys)
-
-    vp = {}
-    for name in list(preds["test"].keys()):
-        p = preds["test"][name]
-        yp = np.array([p[j, L].ravel()[oc_idx] for j in js for L in leads_used], np.float32).reshape(-1) * D.scale
-        case = PhysicsCase(name=name, results={"origin": xs[:, 0], "lead": xs[:, 1], "pixel": xs[:, 2], "sst_anom": yp},
-                           reference_benchmark="oisst_bmc_test_2018_2024")
-        bench = case.validate_against_benchmark()
-        calib = None
-        if name == best_name:
-            u = unc[f"lead{LEADS}"]
-            calib = CalibrationSummary(ece=u["gaussian_ece"], coverage=u["gaussian_coverage90"], target_coverage=0.9,
-                                       sharpness=u["mean_sigma_degC"])
-        sc = compute_physics_confidence(benchmark_comparison=bench, calibration_metrics=calib)
-        vp[name] = {"overall_score": sc.overall_score, "coverage": sc.coverage,
-                    "components": [c.__dict__ for c in sc.components], "rel_l2": bench.relative_l2_error,
-                    "rmse": bench.rmse, "n_points": bench.n_compared_points}
-        log(sc.summary())
-    vp["not_run"] = {"physics_guardrail": "no governing PDE is imposed on a purely data-driven image forecaster",
-                     "numerical_convergence": "no discretisation-refinement parameter in a learned forecaster",
-                     "geometry_ood": "no geometry input"}
+    preds_vp = {name: np.array([p[j, L].ravel()[oc_idx] for j in js for L in leads_used], np.float32).reshape(-1) * D.scale
+                for name, p in preds["test"].items()}
+    u = unc[f"lead{LEADS}"]  # Gaussian calibration of the selected model only (per-pixel sigma from validation)
+    calib = {best_name: CalibrationSummary(ece=u["gaussian_ece"], coverage=u["gaussian_coverage90"], target_coverage=0.9,
+                                           sharpness=u["mean_sigma_degC"])}
+    vp = score_against_reference(
+        "oisst_bmc_test_2018_2024", xs, ys, preds_vp, x_vars=("origin", "lead", "pixel"), y_vars=("sst_anom",),
+        sigma=calib, log=log,
+        description="NOAA OISST v2.1 SST anomalies, Brazil-Malvinas Confluence, held-out 2018-2024",
+        reference_source="NOAA PSL OISST v2.1 (psl.noaa.gov)",
+        not_run={"physics_guardrail": "no governing PDE is imposed on a purely data-driven image forecaster",
+                 "numerical_convergence": "no discretisation-refinement parameter in a learned forecaster",
+                 "geometry_ood": "no geometry input"})
     R["veriphysics"] = vp
     # figures data
     k = int(np.argmin(np.abs(te - np.searchsorted(D.time, np.datetime64("2021-07-15")))))

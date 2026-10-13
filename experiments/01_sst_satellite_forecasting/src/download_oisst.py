@@ -14,7 +14,6 @@ from __future__ import annotations
 import re
 import sys
 import time
-import urllib.request
 from pathlib import Path
 
 import numpy as np
@@ -24,17 +23,20 @@ LAT0, LAT1 = 168, 231
 LON0, LON1 = 1184, 1247
 OUT = Path(__file__).resolve().parents[1] / "data"
 CACHE = OUT / "yearly"
+# PINNeAPPle: a sibling checkout ../PINNeAPPle next to this repository if present, else the installed package
+_SRC = Path(__file__).resolve().parents[4] / "PINNeAPPle"
+if _SRC.is_dir() and str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 
 
 def _fetch(url: str, tries: int = 5) -> str:
-    for k in range(tries):
-        try:
-            with urllib.request.urlopen(url, timeout=300) as r:
-                return r.read().decode()
-        except Exception as e:  # network hiccup: back off and retry
-            print(f"  retry {k + 1}: {e}", flush=True)
-            time.sleep(5 * (k + 1))
-    raise RuntimeError(f"failed: {url}")
+    """Text body of ``url`` via PINNeAPPle ``fetch_cached`` (retries, exponential backoff, atomic write). The raw
+    response is removed once read: the yearly ``sst_<year>.npz`` files are the cache."""
+    from pinneapple_data.datasets.download import fetch_cached
+    p = fetch_cached(url, CACHE / "raw", tries=tries, timeout=300, backoff=3.0)
+    txt = p.read_text(encoding="utf-8")
+    p.unlink()
+    return txt
 
 
 def _parse_ascii_grid(txt: str) -> tuple[np.ndarray, np.ndarray]:
