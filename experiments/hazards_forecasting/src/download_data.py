@@ -6,25 +6,27 @@ NOAA NCEI/WDS tsunami events and run-ups:                                       
 Smithsonian GVP Holocene eruptions (WFS):                                                      data/volcano/
 """
 import json
+import os
 import sys
-import time
-import urllib.request
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[1] / "data"
+# PINNeAPPle: $PINNEAPPLE_SRC, else a sibling checkout ../PINNeAPPle, else the installed package
+_SRC = Path(os.environ.get("PINNEAPPLE_SRC", Path(__file__).resolve().parents[4] / "PINNeAPPle"))
+if _SRC.is_dir() and str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
 IBTRACS = ("https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/"
            "v04r01/access/csv/ibtracs.since1980.list.v04r01.csv")
 
 
 def get(url, tries=4):
-    for k in range(tries):
-        try:
-            with urllib.request.urlopen(url, timeout=120) as r:
-                return r.read()
-        except Exception as e:  # noqa: BLE001
-            print("retry", k, url[:90], e, file=sys.stderr)
-            time.sleep(3 * (k + 1))
-    raise RuntimeError(url)
+    """Body of ``url`` (PINNeAPPle ``fetch_cached``: retries with exponential backoff, atomic write); the raw
+    download is removed once read, the parsed/saved catalog below is the cache."""
+    from pinneapple_data.datasets.download import fetch_cached
+    p = fetch_cached(url, DATA / ".download", tries=tries, timeout=120, backoff=3.0)
+    body = p.read_bytes()
+    p.unlink()
+    return body
 
 
 def ibtracs():

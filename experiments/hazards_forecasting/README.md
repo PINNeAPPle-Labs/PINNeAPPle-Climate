@@ -4,8 +4,9 @@ Experiments with the adaptive forecasting ensembles of PINNeAPPle (`pinneapple_s
 `pinneapple_physics.ensemble.PhysicsEnsemble`; Fixed-Share weights + AdaHedge + adaptive conformal intervals) on public
 data. Goal: forecasts that do not overfit, and honest statements when there is no skill.
 
-The ensemble module is not on PINNeAPPle `main` yet; the experiments were run against branch
-`claude/clever-archimedes-sajlck` (set `PINNEAPPLE_SRC` to a checkout of it).
+The experiments were run against a pre-release branch of the ensemble module, which is now on PINNeAPPle `main`.
+PINNeAPPle is taken from `$PINNEAPPLE_SRC` if set, else from a sibling checkout `../PINNeAPPle` next to this
+repository, else from the installed package (`pip install -r requirements.txt` at the repository root).
 
 ## Protocol (src/common.py)
 
