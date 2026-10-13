@@ -52,21 +52,13 @@ def run_delayed(ens, queries, references, available_at, keep=False):
 
     ``queries[k]["t"]`` is the issue time (a number comparable with ``available_at``).
     Returns per-case dicts with ensemble/expert predictions and the weights used.
+    Thin wrapper over PINNeAPPle ``PhysicsEnsemble.run_delayed`` (labels still pending at the end are not learned).
     """
-    import heapq
-
-    pending, out = [], []
-    for k, q in enumerate(queries):
-        while pending and pending[0][0] <= q["t"]:
-            _, j, last = heapq.heappop(pending)
-            ens._last = last
-            ens.update(queries[j], references[j])
-        p = ens.predict(q)
-        last = ens._last
-        heapq.heappush(pending, (available_at[k], k, last))
-        out.append({"prediction": p["prediction"], "lower": p["lower"], "upper": p["upper"], "active": p["active"],
-                    "experts": p["expert_predictions"], "weights": p["weights"]})
-    return out
+    run = ens.run_delayed(queries, references, available_at, issue_times=[q["t"] for q in queries],
+                          keep_predictions=True, flush=False)
+    return [{"prediction": p["prediction"], "lower": p["lower"], "upper": p["upper"], "active": p["active"],
+             "experts": p["expert_predictions"], "weights": dict(zip(run.names, w.tolist(), strict=True))}
+            for p, w in zip(run.predictions, run.weights, strict=True)]
 
 
 def cluster_skill(err_model, err_ref, groups, n=2000, seed=0):

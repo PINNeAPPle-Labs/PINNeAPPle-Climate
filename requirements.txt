@@ -4,6 +4,7 @@
 # or keep a checkout next to this repository (../PINNeAPPle): the scripts put that sibling checkout first on
 # sys.path when it exists (hazards_forecasting also honours $PINNEAPPLE_SRC), and the installed package otherwise.
 # Needs a library version with pinneapple_analysis.uncertainty.resampling, score_against_reference and
-# pinneapple_data.datasets.download.fetch_cached (branch feat/analysis-resampling-and-scoring).
+# pinneapple_data.datasets.download.fetch_cached (branch feat/analysis-resampling-and-scoring), and
+# PhysicsEnsemble.run_delayed (branch feat/ensemble-delayed-and-gif-stack).
 # Some scripts also import pandas (and matplotlib for the figures); install those as needed.
 pinneapple @ git+https://github.com/PINNeAPPle-Labs/PINNeAPPle@main
