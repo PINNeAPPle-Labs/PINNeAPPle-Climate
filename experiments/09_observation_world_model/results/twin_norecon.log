@@ -1,0 +1,40 @@
+generating truth trajectories
+tuning the classical filters (true sigma, independent cases)
+  Q = 0.1, EnKF inflation = 1.2, EKF analysis 0.599, EnKF analysis 0.988
+running the classical filters
+training the learned filter
+/Users/yanbarros/Documents/GitHub/pinneapple-labs/PINNeAPPle-Climate/experiments/09_observation_world_model/src/learned_filter.py:203: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:821.)
+  record = {k: float(v) for k, v in losses.items()}
+step     0  loss 16.208  recon 4.784  hidden 4.689  prior 0.122  rollout 2.949  sigma_n 0.135  val analysis 3.675  val forecast 4.313
+step   250  loss 6.606  recon 1.115  hidden 2.094  prior 0.578  rollout 0.922  sigma_n 0.108  val analysis 2.169  val forecast 1.686
+step   500  loss 5.640  recon 1.093  hidden 1.954  prior 0.333  rollout 0.665  sigma_n 0.110  val analysis 1.894  val forecast 0.804
+step   750  loss 6.018  recon 1.080  hidden 2.168  prior 0.255  rollout 0.645  sigma_n 0.106  val analysis 1.710  val forecast 0.570
+step  1000  loss 7.439  recon 1.097  hidden 2.720  prior 0.223  rollout 0.779  sigma_n 0.104  val analysis 1.749  val forecast 0.451
+step  1250  loss 5.200  recon 1.098  hidden 2.013  prior 0.223  rollout 0.430  sigma_n 0.102  val analysis 1.683  val forecast 0.432
+step  1500  loss 4.123  recon 1.080  hidden 1.639  prior 0.204  rollout 0.294  sigma_n 0.099  val analysis 1.655  val forecast 0.382
+step  1750  loss 5.419  recon 1.096  hidden 2.084  prior 0.200  rollout 0.456  sigma_n 0.098  val analysis 1.602  val forecast 0.394
+step  2000  loss 3.605  recon 1.086  hidden 1.428  prior 0.203  rollout 0.255  sigma_n 0.098  val analysis 1.581  val forecast 0.281
+step  2250  loss 4.868  recon 1.113  hidden 1.944  prior 0.204  rollout 0.337  sigma_n 0.096  val analysis 1.611  val forecast 0.293
+step  2500  loss 6.005  recon 1.131  hidden 2.244  prior 0.220  rollout 0.558  sigma_n 0.095  val analysis 1.540  val forecast 0.291
+step  2750  loss 4.270  recon 1.108  hidden 1.681  prior 0.231  rollout 0.297  sigma_n 0.092  val analysis 1.546  val forecast 0.267
+step  3000  loss 3.665  recon 1.129  hidden 1.470  prior 0.241  rollout 0.232  sigma_n 0.091  val analysis 1.538  val forecast 0.228
+step  3250  loss 5.525  recon 1.120  hidden 2.113  prior 0.243  rollout 0.458  sigma_n 0.089  val analysis 1.508  val forecast 0.198
+step  3500  loss 4.527  recon 1.099  hidden 1.849  prior 0.227  rollout 0.265  sigma_n 0.089  val analysis 1.517  val forecast 0.196
+step  3750  loss 5.172  recon 1.098  hidden 2.042  prior 0.230  rollout 0.370  sigma_n 0.088  val analysis 1.509  val forecast 0.191
+step  3999  loss 4.944  recon 1.163  hidden 1.950  prior 0.236  rollout 0.345  sigma_n 0.088  val analysis 1.509  val forecast 0.193
+running the learned filter
+
+wrote /Users/yanbarros/Documents/GitHub/pinneapple-labs/PINNeAPPle-Climate/experiments/09_observation_world_model/results/twin_norecon.json  (259.0 s)
+
+method          analysis     unobs    4-step  gain rel  gain noi   Dz rel
+-------------------------------------------------------------------------
+ekf_trueR          0.835     1.027     0.528     0.780     0.226    0.038
+ekf_scalarR        0.708     0.819     0.611     0.410     0.357    0.224
+ekf_swappedR       2.074     2.598     1.672     0.412     0.786    2.397
+enkf_trueR         1.267     1.639     0.881     0.844     0.358    0.036
+enkf_swappedR      3.343     4.422     3.321     0.436     0.852    3.594
+learned            0.349     0.402     0.176     0.304     0.042    0.082
+persistence (optimistic, no model): 1-step 0.948  4-step 3.062
+
+reference optimal gain (true R): reliable 0.791, noisy 0.274; true sigma_o^2: 0.062 / 2.250
