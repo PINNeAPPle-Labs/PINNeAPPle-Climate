@@ -1,0 +1,48 @@
+name: Experiments
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Compile, lint and test the experiments package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the linters
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "ruff>=0.6" pytest
+
+      # The experiments import the PINNeAPPle library, which is a heavy install and is
+      # not on PyPI at the version these scripts need (requirements.txt pins branches).
+      # Compiling does not import, so this catches syntax errors and broken files
+      # without pulling the library or the data.
+      - name: Every module compiles
+        run: python -m compileall -q experiments
+
+      # Only the rules that mean "this file is broken": syntax errors and undefined
+      # names. The wider ruff set has 69 findings in this package today; turning it on
+      # here would make the job red for style, which is not what this workflow is for.
+      - name: Lint for real errors
+        run: python -m ruff check experiments --select E9,F63,F7,F82
+
+      # The ensemble unit tests belong to the library, where PhysicsEnsemble lives
+      # (see issue #12); this runs whatever tests the repository itself grows.
+      - name: Run the tests that exist here
+        run: |
+          if [ -d tests ] && compgen -G "tests/test_*.py" > /dev/null; then
+            python -m pytest tests -q -rs
+          else
+            echo "No tests in this repository yet — see issue #15."
+          fi
